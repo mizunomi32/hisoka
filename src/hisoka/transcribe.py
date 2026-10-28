@@ -2,8 +2,6 @@ import json
 import wave
 from pathlib import Path
 
-import mlx_whisper
-
 MODEL = "mlx-community/whisper-large-v3-turbo"
 
 # 無音区間で Whisper が出しがちな、動画由来の定型文
@@ -25,8 +23,23 @@ def drop_hallucinations(segments: list[dict], duration: float) -> list[dict]:
     ]
 
 
+def format_lines(segments: list[dict]) -> list[str]:
+    """セグメントを `[00:12:34] 発言` の行にする。"""
+    lines = []
+    for seg in segments:
+        s = int(seg["start"])
+        lines.append(f"[{s // 3600:02d}:{s % 3600 // 60:02d}:{s % 60:02d}] {seg['text']}")
+    return lines
+
+
+def load_lines(meeting_dir: Path) -> list[str]:
+    return format_lines(json.loads((meeting_dir / "transcript.json").read_text()))
+
+
 def transcribe(meeting_dir: Path) -> Path:
     """meeting_dir/audio.wav を文字起こしし、meeting_dir/transcript.json に書き出す。"""
+    import mlx_whisper  # 重いので、要約やノート作成で load_lines だけ使うときは読み込まない
+
     audio = meeting_dir / "audio.wav"
     with wave.open(str(audio)) as w:
         duration = w.getnframes() / w.getframerate()

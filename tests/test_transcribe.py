@@ -1,4 +1,4 @@
-from hisoka.transcribe import drop_hallucinations
+from hisoka.transcribe import drop_hallucinations, format_lines
 
 
 def seg(start, end, text):
@@ -17,6 +17,11 @@ def test_drop_hallucinations():
     assert [s["text"] for s in kept] == ["よろしくお願いします", "失礼します"]
 
 
+def test_format_lines():
+    assert format_lines([seg(754.9, 756.0, "〜"), seg(3661.0, 3662.0, "はい")]) == ["[00:12:34] 〜", "[01:01:01] はい"]
+
+
 if __name__ == "__main__":
     test_drop_hallucinations()
+    test_format_lines()
     print("ok")

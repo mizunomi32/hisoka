@@ -2,8 +2,10 @@ import json
 import urllib.request
 from pathlib import Path
 
+from hisoka.transcribe import load_lines
+
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL = "qwen3.5:9b"
+MODEL = "gemma4:e4b"
 # ponytail: リポジトリ直下の prompts/ を読む。アプリ化するときは config.toml でパスを指定する
 PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 CHUNK_CHARS = 6000
@@ -66,11 +68,12 @@ def _chat(system: str, user: str) -> dict:
 
 
 def summarize(meeting_dir: Path) -> Path:
-    """merged.txt を map-reduce で要約し、meeting_dir/summary.json に書き出す。"""
+    """transcript.json を map-reduce で要約し、meeting_dir/summary.json に書き出す。"""
     chunk_prompt = (PROMPTS_DIR / "summarize_chunk.md").read_text()
     merge_prompt = (PROMPTS_DIR / "summarize_merge.md").read_text()
 
-    partials = [_chat(chunk_prompt, c) for c in chunk_lines((meeting_dir / "merged.txt").read_text())]
+    text = "\n".join(load_lines(meeting_dir)) + "\n"
+    partials = [_chat(chunk_prompt, c) for c in chunk_lines(text)]
     summary = partials[0] if len(partials) == 1 else _chat(merge_prompt, json.dumps(partials, ensure_ascii=False))
 
     out = meeting_dir / "summary.json"
