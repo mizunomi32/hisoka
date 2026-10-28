@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# 録音と会議ごとの成果物（機密）
+meetings/
+*.wav
+*.m4a
+*.mp3
