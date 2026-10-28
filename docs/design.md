@@ -45,7 +45,7 @@ flowchart LR
     SUM --> OBS[Obsidian 出力]
 ```
 
-文字起こしと話者分離は同じ音声を別々に処理し、その結果をタイムスタンプで突き合わせる。技術スタックは Python、sounddevice、mlx-whisper、pyannote.audio、Ollama、rumps。
+文字起こしと話者分離は同じ音声を別々に処理し、その結果をタイムスタンプで突き合わせる。技術スタックは Python、sounddevice、mlx-whisper、sherpa-onnx、Ollama、rumps。
 
 ## コンポーネント設計
 
@@ -66,8 +66,8 @@ flowchart LR
 
 ### 3. 話者分離
 
-- pyannote.audio の話者分離パイプラインを使い、話者区間（start / end / speaker）を出力。
-- MPS（Apple GPU）で動かし、遅ければ CPU に切り替える。
+- sherpa-onnx の話者分離（pyannote segmentation-3.0 の ONNX 版 + 3D-Speaker の話者埋め込み + クラスタリング）を使い、話者区間（start / end / speaker）を出力。
+- モデルは初回に GitHub Releases から `~/.cache/hisoka/models/` に取得する。Hugging Face のアカウントやトークンは不要。CPU（ONNX Runtime）で動かす。
 - 話者数が分かっている会議では、人数を指定して精度を上げられるようにする。
 
 ### 4. マージ
@@ -178,10 +178,10 @@ tags: [meeting]
 | 処理 | メモリ目安 | 60分会議の処理時間目安 |
 | --- | --- | --- |
 | 文字起こし（large-v3-turbo） | 実測 約1.5GB | 実測 約2分（39分の音声で134秒、約17倍速） |
-| 話者分離（pyannote） | 約1〜2GB | 数分〜十数分 |
+| 話者分離（sherpa-onnx） | 実測 約0.8GB | 実測 約3分（39分の音声で176秒、CPU 4スレッド） |
 | 要約（qwen3.5 9B） | 約6〜8GB | 数分 |
 
-「実測」以外の数値は概算で、機種によって変わる。プロトタイプで実測して、この表を更新する。文字起こしの実測は Apple Silicon・メモリ24GB の MacBook Pro（2026-10-29）、初回のモデルダウンロード（約1.6GB）を除く。音声は16kHz・モノラルのWAVで1時間あたり約115MB。
+「実測」以外の数値は概算で、機種によって変わる。プロトタイプで実測して、この表を更新する。実測は Apple Silicon・メモリ24GB の MacBook Pro（2026-10-29）、初回のモデルダウンロード（文字起こし約1.6GB、話者分離約44MB）を除く。音声は16kHz・モノラルのWAVで1時間あたり約115MB。
 
 ## リスクと対策
 
@@ -195,7 +195,6 @@ tags: [meeting]
 | 9Bモデルの要約品質が不足する | 要約が浅くなる | プロンプト調整、必要に応じて大きいモデルへの差し替えを設定で可能にする |
 | BlackHole使用時にMacの音量キーが効かない | 使い勝手の低下 | 会議時だけ出力デバイスを切り替える手順を用意する |
 | py2app化でマイク権限が取れない | アプリ化で詰まる | 初版はターミナル起動、Info.plistに権限の説明文を入れる |
-| pyannoteの初回モデル取得にHugging Faceトークンが必要 | セットアップの手間 | 初回のみ取得し、以降はローカルのキャッシュを使う |
 
 ## 開発ステップ
 

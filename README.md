@@ -13,7 +13,7 @@
 - 言語: Python
 - 録音: sounddevice + soundfile（オンライン会議は BlackHole 2ch 経由）
 - 文字起こし: mlx-whisper（whisper-large-v3-turbo）
-- 話者分離: pyannote.audio
+- 話者分離: sherpa-onnx
 - 要約: Ollama + qwen3.5 9B
 - UI: rumps（メニューバー常駐）
 
