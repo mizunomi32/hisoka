@@ -1,4 +1,5 @@
 import json
+import time
 import urllib.request
 from pathlib import Path
 
@@ -10,6 +11,7 @@ MODEL = "gemma4:e4b"
 # ponytail: リポジトリ直下の prompts/ を読む。アプリ化するときは config.toml でパスを指定する
 PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 CHUNK_CHARS = 6000
+RETRY_WAIT = 5  # 接続が切れたときに再試行するまでの秒数
 
 # Ollama 0.20 + qwen3.5 では format にスキーマを渡しても出力が制約されないため、
 # 形はプロンプトで指示し、受け取った側で検証する。プロンプトファイルを編集しても壊れないようコード側に置く
@@ -28,6 +30,8 @@ def parse_summary(content: str) -> dict:
     missing = KEYS - summary.keys()
     if missing:
         raise ValueError(f"要約に {sorted(missing)} がない")
+    # ToDo がないとき、作業内容が「不明」の項目を入れてくることがある
+    summary["todos"] = [t for t in summary["todos"] if t.get("task", "").strip() not in ("", "不明", "なし")]
     return summary
 
 
@@ -46,26 +50,30 @@ def chunk_lines(text: str, size: int = CHUNK_CHARS) -> list[str]:
 
 
 def _chat(system: str, user: str) -> dict:
-    # 閉じ括弧の書き忘れなどで壊れた JSON が返ることがある。同じ温度だと同じ誤りを繰り返すため、再試行ごとに上げる
-    temperatures = [0.2, 0.5, 0.8]
-    for temperature in temperatures:
+    # 閉じ括弧の書き忘れなどで壊れた JSON が返ることがある。同じ温度だと同じ誤りを繰り返すため、再試行ごとに上げる。
+    # Ollama の再起動などで接続が切れたときも、少し待って再試行する
+    error: Exception | None = None
+    for temperature in [0.2, 0.5, 0.8]:
         body = {
             "model": MODEL,
             "messages": [{"role": "system", "content": system + JSON_INSTRUCTION}, {"role": "user", "content": user}],
             "format": "json",
             "think": False,
             "stream": False,
-            # num_predict: 出力が止まらなくなるのを防ぐ上限
-            "options": {"num_ctx": 16384, "num_predict": 4096, "temperature": temperature},
+            # num_predict: 出力が止まらなくなったときの上限。通常の出力は 400〜900 トークン
+            "options": {"num_ctx": 16384, "num_predict": 1500, "temperature": temperature},
         }
         req = urllib.request.Request(OLLAMA_URL, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=600) as res:
-            content = json.loads(res.read())["message"]["content"]
         try:
+            with urllib.request.urlopen(req, timeout=600) as res:
+                content = json.loads(res.read())["message"]["content"]
             return parse_summary(content)
-        except ValueError:  # JSONDecodeError も ValueError
-            if temperature == temperatures[-1]:
-                raise
+        except OSError as e:  # 接続エラー・タイムアウト
+            error = e
+            time.sleep(RETRY_WAIT)
+        except ValueError as e:  # 壊れた JSON（JSONDecodeError も ValueError）
+            error = e
+    raise error
 
 
 def summarize(meeting_dir: Path) -> Path:
