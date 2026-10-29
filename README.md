@@ -40,6 +40,8 @@ uv run hisoka note       meetings/2026-10-28_1400   # → ~/Documents/mtg/ に�
 
 要約の観点や書き方は `prompts/` の Markdown を編集して変えられる。
 
+人名・用語の表記は `~/Documents/mtg/_dictionary/` の `people.md` と `terms.md` に表で登録する（初回の `summarize` / `note` 実行時に空のテンプレートが作られる）。音声認識が間違えやすい表記を書いておくと、文字起こしで正しい表記に置き換わり、要約の表記も揃う。
+
 `meetings/` と音声ファイルは `.gitignore` で除外している。
 
 ## テスト

@@ -1,4 +1,7 @@
-from hisoka.dictionary import correct, parse_table, prompt_block
+import tempfile
+from pathlib import Path
+
+from hisoka.dictionary import correct, load, parse_table, prompt_block
 
 TABLE = """# 人名辞書
 
@@ -33,8 +36,21 @@ def test_prompt_block():
     assert prompt_block(parse_table(TABLE)[:2]) == "\n\n人名・用語は次の表記に揃えてください。\n- 本田圭佑（サッカー選手）\n- Redash\n"
 
 
+def test_load_creates_templates():
+    with tempfile.TemporaryDirectory() as d:
+        dict_dir = Path(d) / "_dictionary"
+        assert load(dict_dir) == []  # テンプレートは空の表
+        assert sorted(p.name for p in dict_dir.iterdir()) == ["people.md", "terms.md"]
+        assert (dict_dir / "people.md").read_text().startswith("# 人名辞書\n")
+
+        # 既存のファイルは上書きしない
+        (dict_dir / "terms.md").write_text(TABLE)
+        assert [e["term"] for e in load(dict_dir)] == ["本田圭佑", "Redash", "未登録"]
+
+
 if __name__ == "__main__":
     test_parse_table()
     test_correct()
     test_prompt_block()
+    test_load_creates_templates()
     print("ok")

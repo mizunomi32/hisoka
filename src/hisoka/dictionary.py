@@ -2,7 +2,17 @@ import re
 from pathlib import Path
 
 DICT_DIR = Path.home() / "Documents" / "mtg" / "_dictionary"
-FILES = ["people.md", "terms.md"]
+TEMPLATE = """# {title}
+
+文字起こしと要約で、{kind}をこの表記に揃える。「読み・誤認識」には、音声認識が間違えやすい表記をカンマ区切りで書く。
+
+| 表記 | 読み・誤認識 | 補足 |
+| --- | --- | --- |
+"""
+FILES = {
+    "people.md": TEMPLATE.format(title="人名辞書", kind="人名"),
+    "terms.md": TEMPLATE.format(title="用語辞書", kind="用語"),
+}
 
 
 def parse_table(markdown: str) -> list[dict]:
@@ -18,8 +28,15 @@ def parse_table(markdown: str) -> list[dict]:
 
 
 def load(dict_dir: Path = DICT_DIR) -> list[dict]:
-    """辞書ファイルを読む。ファイルがなければ空。"""
-    return [e for f in FILES if (dict_dir / f).exists() for e in parse_table((dict_dir / f).read_text())]
+    """辞書ファイルを読む。ファイルがなければ空の表のテンプレートを作る。"""
+    dict_dir.mkdir(parents=True, exist_ok=True)
+    entries = []
+    for name, template in FILES.items():
+        path = dict_dir / name
+        if not path.exists():
+            path.write_text(template)
+        entries += parse_table(path.read_text())
+    return entries
 
 
 def correct(text: str, entries: list[dict]) -> str:

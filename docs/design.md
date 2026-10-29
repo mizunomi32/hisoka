@@ -85,7 +85,7 @@ flowchart LR
 
 ### 6. 人名・用語辞書
 
-- 人名と用語を `~/Documents/mtg/_dictionary/` の Markdown（`people.md`、`terms.md`）に表で登録する。
+- 人名と用語を `~/Documents/mtg/_dictionary/` の Markdown（`people.md`、`terms.md`）に表で登録する。ファイルがなければ、読み込み時に空の表のテンプレートを作る。
 - 列は「表記」「読み・誤認識されやすい表記」「補足（所属や意味）」の3つ。
 - 辞書は2か所で使う。
     1. 後処理：文字起こしを読み込むとき（`load_lines`）に、誤認識されやすい表記を正しい表記に置換する。`transcript.json` は Whisper の出力のまま残すので、辞書を直せば文字起こしをやり直さずに反映される。
