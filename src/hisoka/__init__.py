@@ -10,7 +10,7 @@ def main() -> None:
     p.add_argument("meeting_dir", type=Path)
     p = sub.add_parser("summarize", help="文字起こしを要約する")
     p.add_argument("meeting_dir", type=Path)
-    p = sub.add_parser("note", help="要約と文字起こしを Markdown ノートにする")
+    p = sub.add_parser("note", help="要約と文字起こしを ~/Documents/mtg に Markdown で書き出す")
     p.add_argument("meeting_dir", type=Path)
     args = parser.parse_args()
 

@@ -1,10 +1,10 @@
 # hisoka
 
-会議の録音・文字起こし・要約・Obsidianへの保存までを、MacBook Pro（Apple Silicon）上ですべてローカルで完結させる個人用アプリ。音声も文字起こしも外部サービスに送らない。
+会議の録音・文字起こし・要約・Markdownでの保存までを、MacBook Pro（Apple Silicon）上ですべてローカルで完結させる個人用アプリ。音声も文字起こしも外部サービスに送らない。
 
 ## 状態
 
-試作段階。録音済みの音声ファイルから、文字起こし → 要約 → Markdown ノートまでを CLI で実行できる。録音、Obsidian Vault への保存、メニューバー UI はまだない。
+試作段階。録音済みの音声ファイルから、文字起こし → 要約 → Markdown ノートまでを CLI で実行できる。録音とメニューバー UI はまだない。
 
 ## 必要なもの
 
@@ -28,13 +28,15 @@ mkdir -p meetings/2026-10-28_1400
 ffmpeg -i 録音.m4a -vn -ac 1 -ar 16000 -c:a pcm_s16le meetings/2026-10-28_1400/audio.wav
 ```
 
-3つのコマンドを順に実行する。各段の出力は同じフォルダに書き出され、どの段からでもやり直せる。
+3つのコマンドを順に実行する。`transcribe` と `summarize` の出力は会議フォルダに残り、どの段からでもやり直せる。
 
 ```sh
 uv run hisoka transcribe meetings/2026-10-28_1400   # → transcript.json
 uv run hisoka summarize  meetings/2026-10-28_1400   # → summary.json（Ollama を起動しておく）
-uv run hisoka note       meetings/2026-10-28_1400   # → note.md
+uv run hisoka note       meetings/2026-10-28_1400   # → ~/Documents/mtg/ に書き出す
 ```
+
+`note` は要約を `~/Documents/mtg/YYYY-MM-DD_HHMM.md`、文字起こしを `~/Documents/mtg/raw/YYYY-MM-DD_HHMM.md` に書き出す。同じ名前があれば `-2` などを付け、上書きしない。
 
 要約の観点や書き方は `prompts/` の Markdown を編集して変えられる。
 
@@ -48,7 +50,7 @@ for t in tests/test_*.py; do uv run python "$t"; done
 
 ## 構成（予定）
 
-録音 → 文字起こし → 要約 → Obsidian 出力 の順に、録音停止後にバックグラウンドで実行する。
+録音 → 文字起こし → 要約 → Markdown 出力 の順に、録音停止後にバックグラウンドで実行する。
 
 - 言語: Python
 - 録音: sounddevice + soundfile（オンライン会議は BlackHole 2ch 経由）
