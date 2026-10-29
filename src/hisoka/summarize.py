@@ -2,6 +2,7 @@ import json
 import urllib.request
 from pathlib import Path
 
+from hisoka import dictionary
 from hisoka.transcribe import load_lines
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
@@ -69,8 +70,9 @@ def _chat(system: str, user: str) -> dict:
 
 def summarize(meeting_dir: Path) -> Path:
     """transcript.json を map-reduce で要約し、meeting_dir/summary.json に書き出す。"""
-    chunk_prompt = (PROMPTS_DIR / "summarize_chunk.md").read_text()
-    merge_prompt = (PROMPTS_DIR / "summarize_merge.md").read_text()
+    terms = dictionary.prompt_block(dictionary.load())
+    chunk_prompt = (PROMPTS_DIR / "summarize_chunk.md").read_text() + terms
+    merge_prompt = (PROMPTS_DIR / "summarize_merge.md").read_text() + terms
 
     text = "\n".join(load_lines(meeting_dir)) + "\n"
     partials = [_chat(chunk_prompt, c) for c in chunk_lines(text)]

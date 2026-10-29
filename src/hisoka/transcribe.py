@@ -2,6 +2,8 @@ import json
 import wave
 from pathlib import Path
 
+from hisoka import dictionary
+
 MODEL = "mlx-community/whisper-large-v3-turbo"
 
 # 無音区間で Whisper が出しがちな、動画由来の定型文
@@ -33,7 +35,9 @@ def format_lines(segments: list[dict]) -> list[str]:
 
 
 def load_lines(meeting_dir: Path) -> list[str]:
-    return format_lines(json.loads((meeting_dir / "transcript.json").read_text()))
+    """transcript.json を行にし、辞書で誤認識を直す。辞書を直したら文字起こしをやり直さずに反映される。"""
+    entries = dictionary.load()
+    return [dictionary.correct(line, entries) for line in format_lines(json.loads((meeting_dir / "transcript.json").read_text()))]
 
 
 def transcribe(meeting_dir: Path) -> Path:
