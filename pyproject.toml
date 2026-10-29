@@ -3,6 +3,8 @@ name = "hisoka"
 version = "0.1.0"
 description = "ローカル完結の会議録音・議事録アプリ"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Mitsuhiro", email = "mizuno@mz32.dev" }
 ]
