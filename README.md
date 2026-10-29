@@ -28,7 +28,13 @@ mkdir -p meetings/2026-10-28_1400
 ffmpeg -i 録音.m4a -vn -ac 1 -ar 16000 -c:a pcm_s16le meetings/2026-10-28_1400/audio.wav
 ```
 
-3つのコマンドを順に実行する。`transcribe` と `summarize` の出力は会議フォルダに残り、どの段からでもやり直せる。
+`run` で文字起こし → 要約 → 書き出しを順に実行する（要約の前に Ollama を起動しておく）。
+
+```sh
+uv run hisoka run meetings/2026-10-28_1400
+```
+
+各段を個別に実行することもできる。`transcribe` と `summarize` の出力は会議フォルダに残り、どの段からでもやり直せる。
 
 ```sh
 uv run hisoka transcribe meetings/2026-10-28_1400   # → transcript.json
@@ -63,3 +69,7 @@ for t in tests/test_*.py; do uv run python "$t"; done
 ## ドキュメント
 
 - [設計](docs/design.md)
+
+## ライセンス
+
+[MIT](LICENSE)
